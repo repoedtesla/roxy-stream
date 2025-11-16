@@ -26,39 +26,7 @@
 
 2. Run npm install
 
-3. Create a config.js in the root directory with the following
-module.exports = {
-  REQUEST_PREFIX: "!",
-  REQUEST_FILE: "./data/requests.json",
-  OVERLAY_PORT: 8080,
-  COOLDOWN_SECONDS: 30,
-  MAX_REQUESTS_PER_USER: 3,
-  VOTE_THRESHOLD: 3,
-
-  STREAMING_PLATFORMS: ["twitch","youtube","tiktok"],
-
-  TWITCH_CHANNEL: "yourTwitchChannel",
-  TIKTOK: { USERNAME: "yourTikTokUsername" },
-  YOUTUBE_LIVECHAT_ID: "yourYouTubeLiveChatId",
-
-  SPOTIFY: {
-    CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
-    CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
-    REDIRECT_URI: process.env.SPOTIFY_REDIRECT_URI
-  },
-
-  ADMINS: {
-    twitch: ["yourTwitchName"],
-    youtube: ["yourYouTubeName"],
-    tiktok: ["yourTikTokName"]
-  },
-
-  BANNED_USERS: {
-    twitch: [],
-    youtube: [],
-    tiktok: []
-  }
-};
+3. Edit the example config.js and fill in **ALL** your details to ensure it works properly.
 
 4. Run node auth.js to authenticate Spotify
 

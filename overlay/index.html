@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background: transparent;
+    color: #fff;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+    font-size: 28px;
+    color: #ff4c4c;
+    text-shadow: 0 0 20px #ff4c4c, 0 0 40px #ff4c4c;
+    margin: 10px 0;
+  }
+
+  .song {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 15px;
+    text-shadow: 0 0 15px #ff4c4c;
+    transition: 0.3s all ease;
+  }
+
+  .song.active {
+    animation: pulse 1.2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { text-shadow: 0 0 15px #ff4c4c, 0 0 30px #ff4c4c; }
+    50% { text-shadow: 0 0 25px #ff4c4c, 0 0 50px #ff4c4c; }
+    100% { text-shadow: 0 0 15px #ff4c4c, 0 0 30px #ff4c4c; }
+  }
+
+  .queue {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0 15px;
+    font-size: 16px;
+  }
+
+  .queue-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    margin-bottom: 2px;
+    background: rgba(255, 76, 76, 0.1);
+    border-radius: 6px;
+    text-shadow: 0 0 5px #000;
+    transition: 0.2s all ease;
+  }
+
+  .queue-item.active {
+    background: rgba(255, 76, 76, 0.3);
+    font-weight: bold;
+    text-shadow: 0 0 10px #ff4c4c;
+  }
+
+  .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    background: rgba(255, 76, 76, 0.6);
+    border: none;
+    padding: 8px 16px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    transition: 0.2s all ease;
+    text-shadow: 0 0 5px #000;
+  }
+
+  button:hover {
+    background: rgba(255, 76, 76, 0.9);
+    transform: scale(1.05);
+  }
+
+  #votes {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #ff4c4c;
+    text-shadow: 0 0 5px #000;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,76,76,0.6);
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<h1>🎶 Now Playing</h1>
+<div class="song active" id="currentSong">Loading...</div>
+
+<h2 style="text-align:center; font-size:22px; text-shadow:0 0 10px #ff4c4c;">Queue</h2>
+<div class="queue" id="queue"></div>
+
+<div class="buttons">
+  <button onclick="sendCommand('skip')">Skip</button>
+  <button onclick="sendCommand('voteSkip')">Vote Skip</button>
+  <button onclick="sendCommand('repeat')">Repeat</button>
+  <button onclick="sendCommand('shuffle')">Shuffle</button>
+</div>
+
+<div id="votes">Votes: 0</div>
+
+<script>
+  const ws = new WebSocket(`ws://${location.host}`);
+  const currentSongEl = document.getElementById('currentSong');
+  const queueEl = document.getElementById('queue');
+  const votesEl = document.getElementById('votes');
+
+  let currentTrackId = null;
+
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    const song = data.currentSong;
+    const queue = data.queue;
+
+    if (song) {
+      currentTrackId = song.track.id;
+      currentSongEl.innerHTML = `${song.track.name} <br> <small>Requested by ${song.requestedBy}</small>`;
+      currentSongEl.classList.add('active');
+    } else {
+      currentTrackId = null;
+      currentSongEl.innerHTML = "No song playing";
+      currentSongEl.classList.remove('active');
+    }
+
+    queueEl.innerHTML = "";
+    queue.forEach((s, i) => {
+      const div = document.createElement('div');
+      div.className = 'queue-item';
+      if (s.track.id === currentTrackId) div.classList.add('active');
+      div.innerHTML = `<span>${i+1}. ${s.track.name}</span><span>${s.requestedBy}</span>`;
+      queueEl.appendChild(div);
+    });
+
+    votesEl.innerText = `Votes: ${data.votes || 0}`;
+  };
+
+  function sendCommand(cmd) {
+    ws.send(JSON.stringify({ command: cmd }));
+  }
+</script>
+</body>
+</html>

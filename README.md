@@ -24,15 +24,16 @@
    git clone https://github.com/yourusername/streamtool
    cd streamtool
 
-2. Run npm install
+2. Run
+  ```npm install
 
-3. Edit the example config.js and fill in **ALL** your details to ensure it works properly.
+4. Edit the example config.js and fill in **ALL** your details to ensure it works properly.
 
-4. Run node auth.js to authenticate Spotify
+5. Run node auth.js to authenticate Spotify
 
-5. Open chatid.js and change the youtube video link and the api key, then run node chatid.js
+6. Open chatid.js and change the youtube video link and the api key, then run node chatid.js
 
-6. Run node app.js to start.
+7. Run node app.js to start.
 Use commands in Twitch, YouTube Live Chat, or TikTok chat.
 
 You are allowed to make custom commands be sure to add them to the commands folder and please share them with the community.

@@ -1,5 +1,5 @@
-# THIS IS in BETA please expect issues!
 # Roxy Stream Tool 
+ THIS IS in BETA please expect issues!
 
 🎵 Multi-platform music bot with Twitch, YouTube, TikTok support, Spotify integration, and a modern OBS overlay (soon).
 
@@ -34,7 +34,7 @@
 
 5. Open chatid.js and change the youtube video link and the api key, then run node chatid.js
 
-6. Run node app.js to start.
+6. Run node startup.js to start.
 Use commands in Twitch, YouTube Live Chat, or TikTok chat.
 
 You are allowed to make custom commands be sure to add them to the commands folder and please share them with the community.

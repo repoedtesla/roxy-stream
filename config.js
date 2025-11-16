@@ -1,39 +1,39 @@
 module.exports = {
-    REQUEST_PREFIX: "!",
-    COOLDOWN_SECONDS: 30,
-    MAX_REQUESTS_PER_USER: 3,
-    VOTE_THRESHOLD: 3,
+  REQUEST_PREFIX: "!",
+  REQUEST_FILE: "./requests.json",
+  OVERLAY_PORT: 8080,
+  COOLDOWN_SECONDS: 30,
+  MAX_REQUESTS_PER_USER: 3,
+  VOTE_THRESHOLD: 3,
 
-    ADMINS: {
-        tiktok: ["dih.doh"],
-        twitch: ["stolenbmws"],
-        youtube: ["ytAdmin"]
-    },
+  STREAMING_PLATFORMS: ["twitch", "youtube", "tiktok"],
 
-    BANNED_USERS: {
-        tiktok: [],
-        twitch: [],
-        youtube: []
-    },
+  // Twitch
+  TWITCH_CHANNEL: "yourTwitchChannel",
+  ADMINS: {
+    twitch: ["yourTwitchUsername"],
+    youtube: ["yourYouTubeUsername"],
+    tiktok: ["yourTikTokUsername"]
+  },
+  BANNED_USERS: {
+    twitch: [],
+    youtube: [],
+    tiktok: []
+  },
 
-    SPOTIFY: {
-        CLIENT_ID: "bc134fe3c11c481795a4432a130f00dd",
-        CLIENT_SECRET: "3cd56d4d101c42128905f6c690382f7b",
-        REDIRECT_URI: "http://127.0.0.1:8888/callback"
-    },
+  // Spotify
+  SPOTIFY: {
+    CLIENT_ID: "yourSpotifyClientId",
+    CLIENT_SECRET: "yourSpotifyClientSecret",
+    REDIRECT_URI: "http://localhost:8888/callback"
+  },
 
-    YOUTUBE_API_KEY: "AIzaSyB5BTDFcgAWZ3CFGgsOmRhPnaxpZaW0XDk",
-    YOUTUBE_LIVECHAT_ID: '', 
+  // YouTube
+  YOUTUBE_API_KEY: "yourYouTubeApiKey",
+  YOUTUBE_LIVECHAT_ID: "yourLiveChatId",
 
-    TWITCH_CHANNEL: "stolenbmws", 
-
-    STREAMING_PLATFORMS: ['twitch'],   // <–– which platforms to boot
-    PLATFORMS: ["tiktok", "twitch", "youtube"],  
-
-    TIKTOK: {
-        USERNAME: "dih.doh"   // <–– used for uniqueId
-    },
-
-    OVERLAY_PORT: 8080,
-    REQUEST_FILE: "./requestQueue.json"
+  // TikTok
+  TIKTOK: {
+    USERNAME: "yourTikTokUsername"
+  }
 };

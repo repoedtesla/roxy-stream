@@ -33,4 +33,3 @@ This project has been tested and scanned through multiple antivirus and malware 
 
 ---
 
-If you want it shorter, more detailed, more casual, or more strict, just let me know.

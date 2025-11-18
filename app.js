@@ -1,6 +1,3 @@
-// updated-music-bot.js
-// Combined fixes for request handling, spotify error handling, and overlay robustness.
-
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
@@ -19,10 +16,8 @@ let userRequestCount = {};
 let userCooldowns = {};
 let seenMessages = { twitch: new Set(), youtube: new Set(), tiktok: new Set(), console: new Set() };
 
-// Timer to auto-advance when a track ends
 let trackEndTimer = null;
 
-// ------------------ Persistence ------------------
 try {
   if (fs.existsSync(config.REQUEST_FILE)) {
     const data = JSON.parse(fs.readFileSync(config.REQUEST_FILE, 'utf8'));
@@ -35,7 +30,6 @@ try {
   requestQueue = [];
 }
 
-// ------------------ Command modules loader ------------------
 const commands = {};
 try {
   const cmdsDir = path.join(__dirname, 'commands');
@@ -58,7 +52,6 @@ try {
   console.log("Error loading commands folder:", err.message || err);
 }
 
-// ------------------ Express overlay ------------------
 const app = express();
 const OVERLAY_PORT = config.OVERLAY_PORT || 8080;
 
@@ -73,7 +66,6 @@ app.listen(OVERLAY_PORT, () => {
   console.log(`🎧 Overlay server running on http://localhost:${OVERLAY_PORT}`);
 });
 
-// ------------------ WebSocket server ------------------
 const wss = new WebSocket.Server({ port: OVERLAY_PORT + 1 });
 let clients = [];
 wss.on('connection', ws => {
@@ -85,7 +77,6 @@ function updateOverlay() {
   clients.forEach(ws => { if (ws.readyState === 1) ws.send(data); });
 }
 
-// ------------------ Spotify setup ------------------
 let token;
 try {
   token = JSON.parse(fs.readFileSync('token.json', 'utf8'));
@@ -132,7 +123,6 @@ async function getActiveDevice() {
 }
 
 async function fetchTrackDurationIfMissing(track) {
-  // track from search usually has duration_ms, but be defensive
   try {
     if (track && (track.duration_ms || track.duration_ms === 0)) return track.duration_ms;
     if (!track || !track.id) return 0;
@@ -157,9 +147,7 @@ async function searchTrack(query) {
   }
 }
 
-// ------------------ Music playback (robust) ------------------
 async function playNext(auto = false) {
-  // clear any existing end-timer to avoid double triggers
   if (trackEndTimer) {
     clearTimeout(trackEndTimer);
     trackEndTimer = null;
@@ -176,7 +164,6 @@ async function playNext(auto = false) {
   currentSong.value = next;
   voteSkipUsers.clear();
 
-  // ensure device
   if (!activeDeviceId) activeDeviceId = await getActiveDevice();
   if (!activeDeviceId) {
     console.log("No active Spotify device available; re-queueing the track and aborting play.");
@@ -189,26 +176,21 @@ async function playNext(auto = false) {
 
   try {
     await refreshSpotify();
-    // play by URI; spotify.play accepts { device_id, uris }
     await spotify.play({ device_id: activeDeviceId, uris: [next.track.uri] });
     console.log(`🎶 Now playing: ${next.track.name} (requested by ${next.requestedBy})`);
   } catch (e) {
     console.error("Spotify play error:", e.message || e);
-    // put track back to queue front so we don't lose it
     requestQueue.unshift(next);
     currentSong.value = null;
     saveQueue();
     updateOverlay();
-    // try next after a short delay to avoid rapid repeats
     setTimeout(() => playNext(true), 1500);
     return;
   }
 
-  // Save queue state and update overlay
   saveQueue();
   updateOverlay();
 
-  // set up auto-advance timer using duration_ms (defensive: fetch if missing)
   try {
     let durationMs = next.track.duration_ms;
     if (!durationMs && next.track.id) {
@@ -217,17 +199,14 @@ async function playNext(auto = false) {
     durationMs = Number(durationMs) || 0;
 
     if (durationMs > 0) {
-      // Add a small buffer to ensure Spotify finished switching
       trackEndTimer = setTimeout(() => {
         trackEndTimer = null;
         currentSong.value = null;
-        // ensure overlay shows ended state before next starts
         updateOverlay();
         playNext(true).catch(err => console.error("playNext after timer failed:", err));
-      }, durationMs + 800); // 800ms buffer
+      }, durationMs + 800);
     } else {
-      // If we don't have duration, fall back to polling playback state after a safe default
-      const fallback = 30 * 1000; // 30s fallback
+      const fallback = 30 * 1000;
       console.warn("Track duration unknown, using fallback timer of", fallback, "ms");
       trackEndTimer = setTimeout(() => {
         trackEndTimer = null;
@@ -241,7 +220,6 @@ async function playNext(auto = false) {
   }
 }
 
-// ------------------ Queue handling ------------------
 function saveQueue() {
   try {
     fs.writeFileSync(config.REQUEST_FILE, JSON.stringify(requestQueue, null, 2), 'utf8');
@@ -250,7 +228,6 @@ function saveQueue() {
   }
 }
 
-// ------------------ Command handler ------------------
 async function handleCommand(platform, user, message) {
   try {
     if (!message || typeof message !== 'string') return;
@@ -268,7 +245,6 @@ async function handleCommand(platform, user, message) {
       return requestSong(platform, user, query);
     }
 
-    // external commands
     for (const mod in commands) {
       if (commands[mod][cmd]) {
         try {
@@ -298,7 +274,7 @@ async function requestSong(platform, user, query) {
       return;
     }
     seenMessages[platform].add(id);
-    setTimeout(() => seenMessages[platform].delete(id), 3000); // expire after 3s
+    setTimeout(() => seenMessages[platform].delete(id), 3000);
 
     console.log(`[${platform}] Request received from ${normalizedUser}: "${query}"`);
 
@@ -340,7 +316,6 @@ async function requestSong(platform, user, query) {
     saveQueue();
     console.log(`[Queue] ${normalizedUser} added: ${track.name} - ${track.artists?.map(a => a.name).join(', ')}`);
 
-    // If nothing playing, start playback
     if (!currentSong.value) {
       await playNext();
     } else {
@@ -351,14 +326,11 @@ async function requestSong(platform, user, query) {
   }
 }
 
-// ------------------ Console commands ------------------
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 rl.on('line', async line => handleCommand("console", "console", line.trim()));
 
-// ------------------ Auto play check (keeps queue moving if something else sets currentSong null) ------------------
 setInterval(() => { if (!currentSong.value && requestQueue.length) playNext(true).catch(err => console.error("Auto playNext error:", err)); }, 4000);
 
-// ------------------ Twitch ------------------
 if (Array.isArray(config.STREAMING_PLATFORMS) && config.STREAMING_PLATFORMS.includes('twitch')) {
   try {
     const twitchClient = new tmi.Client({ channels: [config.TWITCH_CHANNEL] });
@@ -375,7 +347,6 @@ if (Array.isArray(config.STREAMING_PLATFORMS) && config.STREAMING_PLATFORMS.incl
   }
 }
 
-// ------------------ TikTok (normalized) ------------------
 if (Array.isArray(config.STREAMING_PLATFORMS) && config.STREAMING_PLATFORMS.includes('tiktok')) {
   try {
     const TikTokConnector = require('./platforms/tiktok');
@@ -383,7 +354,6 @@ if (Array.isArray(config.STREAMING_PLATFORMS) && config.STREAMING_PLATFORMS.incl
       TikTokConnector({ username: config.TIKTOK.USERNAME }, (user, msg) => {
         if (!msg) return;
 
-        // Normalize TikTok messages to string
         let text = msg;
         if (typeof msg === "object") {
           text =
@@ -413,7 +383,6 @@ if (Array.isArray(config.STREAMING_PLATFORMS) && config.STREAMING_PLATFORMS.incl
   }
 }
 
-// ------------------ YouTube ------------------
 if (Array.isArray(config.STREAMING_PLATFORMS) && config.STREAMING_PLATFORMS.includes('youtube')) {
   try {
     const youtube = google.youtube({ version: 'v3', auth: config.YOUTUBE_API_KEY });
